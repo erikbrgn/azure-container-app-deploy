@@ -53,12 +53,23 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
+      - name: Login with azure
+        id: login-azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Test Local Action
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
+          image: nginx:latest
+          app-name: ${{ vars.AZURE_CONTAINER_APP_NAME}}
+          container-name: ${{ vars.AZURE_CONTAINER_NAME }}
+          resource-group-name: ${{ secrets.AZURE_RESOURCE_GROUP }}
 
       - name: Print Output
         id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+        run: |
+          echo "${{ steps.test-action.outputs.status }}"
+          echo "${{ steps.test-action.outputs.container-app }}"

@@ -1,6 +1,6 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: Azure Container App Deploy Action
+description: Deploys a container image to an Azure Container App.
+author: erikbrgn
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
@@ -9,15 +9,35 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: Your input description here
+  image:
+    description: Image to deploy
     required: true
-    default: '1000'
+  app-name:
+    description: Name of the Container App to deploy to
+    required: true
+  container-name:
+    description:
+      The name of the container to target. Sometimes multiple can exist in the
+      same Container App resource.
+    required: true
+  resource-group-name:
+    description: Name of the resource group containing the App Service
+    required: true
+  subscription-id:
+    description: 'Azure subscriptionId'
+    required: false
+  docker-registry-username:
+    description: 'Docker registry username'
+    required: false
+  docker-registry-password:
+    description: 'Docker registry password'
+    required: false
 
-# Define your outputs here.
 outputs:
-  time:
-    description: Your output description here
+  status:
+    description: The status of the deployment
+  container-app:
+    description: The entire Container App object serialized as JSON
 
 runs:
   using: node20
