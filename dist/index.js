@@ -80588,8 +80588,9 @@ async function run() {
         if (!credential) {
             throw new Error('Failed to generate Azure credentials. Aborting...');
         }
-        const resourcesClient = new ResourceManagementClient(credential, subscriptionId);
         const containerAppClient = new ContainerAppsAPIClient(credential, subscriptionId);
+        coreExports.debug('Successfully created a container app client.');
+        const resourcesClient = new ResourceManagementClient(credential, subscriptionId);
         resourcesClient.resourceGroups
             .checkExistence(resourceGroupName)
             .then((result) => {

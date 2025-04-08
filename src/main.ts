@@ -36,12 +36,14 @@ export async function run(): Promise<void> {
       throw new Error('Failed to generate Azure credentials. Aborting...')
     }
 
-    const resourcesClient = new ResourceManagementClient(
+    const containerAppClient = new ContainerAppsAPIClient(
       credential,
       subscriptionId
     )
 
-    const containerAppClient = new ContainerAppsAPIClient(
+    core.debug('Successfully created a container app client.')
+
+    const resourcesClient = new ResourceManagementClient(
       credential,
       subscriptionId
     )
