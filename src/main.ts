@@ -1,4 +1,5 @@
 import * as core from '@actions/core'
+import { exec, type ExecListeners } from '@actions/exec'
 import { ContainerAppsAPIClient } from '@azure/arm-appcontainers'
 import { ResourceManagementClient } from '@azure/arm-resources'
 import { DefaultAzureCredential } from '@azure/identity'
@@ -10,6 +11,16 @@ import { DefaultAzureCredential } from '@azure/identity'
  */
 export async function run(): Promise<void> {
   try {
+    // Start by retrieving the subscription ID by running az account show
+    // and parsing the output. This is a workaround for the fact that
+    // the subscription ID can't be retrieved from the azure/login action directly.
+    const subscriptionId =
+      (await getSubscriptionId()) || core.getInput('subscription-id')
+
+    if (!subscriptionId) {
+      throw new Error('No subscription ID found. aborting...')
+    }
+
     const appName = core.getInput('app-name')
     const containerName = core.getInput('container-name')
     const resourceGroupName = core.getInput('resource-group-name')
@@ -20,13 +31,6 @@ export async function run(): Promise<void> {
     core.debug('Attempting to retrieve Azure credentials...')
 
     const credential = new DefaultAzureCredential()
-
-    const subscriptionId =
-      process.env.AZURE_SUBSCRIPTION_ID || core.getInput('subscription-id')
-
-    if (!subscriptionId) {
-      throw new Error('AZURE_SUBSCRIPTION_ID is not set. aborting...')
-    }
 
     const resourcesClient = new ResourceManagementClient(
       credential,
@@ -101,4 +105,25 @@ export async function run(): Promise<void> {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
   }
+}
+
+async function getSubscriptionId(): Promise<string> {
+  let output = ''
+
+  // Capture the output from the command
+  const options: { listeners: ExecListeners } = {
+    listeners: {
+      stdout: (data) => {
+        output += data.toString()
+      }
+    }
+  }
+
+  // Execute the Azure CLI command
+  await exec('az account show --query id -o tsv', [], options)
+
+  // Clean the output
+  const subscriptionId = output.trim()
+
+  return subscriptionId
 }

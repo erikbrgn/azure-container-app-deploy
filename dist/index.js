@@ -27266,6 +27266,8 @@ function requireCore () {
 
 var coreExports = requireCore();
 
+var execExports = requireExec();
+
 /*
  * Copyright (c) Microsoft Corporation.
  * Licensed under the MIT License.
@@ -80569,6 +80571,13 @@ class DefaultAzureCredential extends ChainedTokenCredential {
  */
 async function run() {
     try {
+        // Start by retrieving the subscription ID by running az account show
+        // and parsing the output. This is a workaround for the fact that
+        // the subscription ID can't be retrieved from the azure/login action directly.
+        const subscriptionId = (await getSubscriptionId()) || coreExports.getInput('subscription-id');
+        if (!subscriptionId) {
+            throw new Error('No subscription ID found. aborting...');
+        }
         const appName = coreExports.getInput('app-name');
         const containerName = coreExports.getInput('container-name');
         const resourceGroupName = coreExports.getInput('resource-group-name');
@@ -80576,10 +80585,6 @@ async function run() {
         coreExports.debug(`Provided image through input: ${image}`);
         coreExports.debug('Attempting to retrieve Azure credentials...');
         const credential = new DefaultAzureCredential();
-        const subscriptionId = process.env.AZURE_SUBSCRIPTION_ID || coreExports.getInput('subscription-id');
-        if (!subscriptionId) {
-            throw new Error('AZURE_SUBSCRIPTION_ID is not set. aborting...');
-        }
         const resourcesClient = new ResourceManagementClient(credential, subscriptionId);
         const containerAppClient = new ContainerAppsAPIClient(credential, subscriptionId);
         resourcesClient.resourceGroups
@@ -80623,6 +80628,22 @@ async function run() {
         if (error instanceof Error)
             coreExports.setFailed(error.message);
     }
+}
+async function getSubscriptionId() {
+    let output = '';
+    // Capture the output from the command
+    const options = {
+        listeners: {
+            stdout: (data) => {
+                output += data.toString();
+            }
+        }
+    };
+    // Execute the Azure CLI command
+    await execExports.exec('az account show --query id -o tsv', [], options);
+    // Clean the output
+    const subscriptionId = output.trim();
+    return subscriptionId;
 }
 
 /**
