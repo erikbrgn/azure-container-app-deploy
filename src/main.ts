@@ -28,9 +28,13 @@ export async function run(): Promise<void> {
 
     core.debug(`Provided image through input: ${image}`)
 
-    core.debug('Attempting to retrieve Azure credentials...')
+    core.debug('Attempting to generate Azure credentials...')
 
     const credential = new DefaultAzureCredential()
+
+    if (!credential) {
+      throw new Error('Failed to generate Azure credentials. Aborting...')
+    }
 
     const resourcesClient = new ResourceManagementClient(
       credential,

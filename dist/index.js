@@ -80583,8 +80583,11 @@ async function run() {
         const resourceGroupName = coreExports.getInput('resource-group-name');
         const image = coreExports.getInput('image');
         coreExports.debug(`Provided image through input: ${image}`);
-        coreExports.debug('Attempting to retrieve Azure credentials...');
+        coreExports.debug('Attempting to generate Azure credentials...');
         const credential = new DefaultAzureCredential();
+        if (!credential) {
+            throw new Error('Failed to generate Azure credentials. Aborting...');
+        }
         const resourcesClient = new ResourceManagementClient(credential, subscriptionId);
         const containerAppClient = new ContainerAppsAPIClient(credential, subscriptionId);
         resourcesClient.resourceGroups
